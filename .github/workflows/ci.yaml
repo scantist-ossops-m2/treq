@@ -12,13 +12,13 @@ jobs:
     timeout-minutes: 5
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
+        python-version: '3.11'
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key:
@@ -29,20 +29,22 @@ jobs:
 
     - run: python -m pip install 'tox<4'
 
-    - run: tox -q -p all -e flake8,towncrier,twine,check-manifest
+    - run: tox -q -p all -e flake8,towncrier,twine,check-manifest,mypy
+      env:
+        TOX_PARALLEL_NO_SPINNER: 1
 
   docs:
     runs-on: ubuntu-20.04
     timeout-minutes: 5
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: "3.8"
+        python-version: "3.11"
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key:
@@ -51,7 +53,7 @@ jobs:
           ${{ runner.os }}-pip-docs-
           ${{ runner.os }}-pip-
 
-    - run: python -m pip install tox
+    - run: python -m pip install 'tox<4'
 
     - run: tox -q -e docs
 
@@ -63,27 +65,39 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-          python-version: ["3.7", "3.8", "3.9", "3.10", "pypy-3.8", "pypy-3.9"]
+          # Python versions common to lowest and latest
+          python-version: ["3.8", "3.9", "3.10", "pypy-3.9"]
           twisted-version: ["lowest", "latest"]
           experimental: [false]
 
           include:
-          - python-version: "3.8"
-            twisted-version: "trunk"
-            experimental: true
 
+          # Pythons too new for lowest
+          - python-version: "3.11"
+            twisted-version: "latest"
+            experimental: false
+
+          - python-version: "3.12"
+            twisted-version: "latest"
+            experimental: false
+
+          - python-version: "pypy-3.10"
+            twisted-version: "latest"
+            experimental: false
+
+          # Experimental trunk build
           - python-version: "3.9"
             twisted-version: "trunk"
             experimental: true
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key:
@@ -97,12 +111,14 @@ jobs:
       shell: python
       run: |
         table = {
-          "3.7": "py37",
           "3.8": "py38",
           "3.9": "py39",
           "3.10": "py310",
+          "3.11": "py311",
+          "3.12": "py312",
           "pypy-3.8": "pypy3",
           "pypy-3.9": "pypy3",
+          "pypy-3.10": "pypy3",
         }
         factor = table["${{ matrix.python-version }}"]
         print("::set-output name=value::" + factor)
@@ -117,3 +133,28 @@ jobs:
         COVERALLS_REPO_TOKEN: 4nctuKHTnVtbdmty2FgdO3iiWm1nb7xc4
         COVERALLS_FLAG_NAME: python_${{ matrix.python-version }}-twisted_${{ matrix.twisted-version }}
         COVERALLS_PARALLEL: true
+
+  # Helper so that on GitHub repo settings we can configure to single job.
+  # Then required jobs can be updated directly form the code,
+  # without having to go the GitHub repo setting -> Protected branch
+  # and all the clicking.
+  treq-required:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ !cancelled() }}
+    # Add here the jobs that should block the merge of a PR.
+    needs:
+      - lint
+      - docs
+      - test
+    steps:
+      - name: Require all successes
+        shell: python3 {0}
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          import json
+          import os
+          import sys
+          results = json.loads(os.environ["RESULTS"])
+          sys.exit(0 if all(result == "success" for result in results) else 1)
