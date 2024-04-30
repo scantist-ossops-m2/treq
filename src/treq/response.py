@@ -107,6 +107,10 @@ class _Response(proxyForInterface(IResponse)):  # type: ignore
         """
         Get a copy of this response's cookies.
         """
+        # NB: This actually returns a RequestsCookieJar, but we type it as a
+        # regular CookieJar because we want to ditch requests as a dependency.
+        # Full deprecation deprecation will require a subclass or wrapper that
+        # warns about the RequestCookieJar extensions.
         jar: CookieJar = cookiejar_from_dict({})
 
         for cookie in self._cookiejar:

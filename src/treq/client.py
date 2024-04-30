@@ -277,8 +277,8 @@ class HTTPClient:
         if not isinstance(cookies, CookieJar):
             cookies = _scoped_cookiejar_from_dict(parsed_url, cookies)
 
-        jar: CookieJar = merge_cookies(self._cookiejar, cookies)
-        wrapped_agent: IAgent = CookieAgent(self._agent, jar)
+        merge_cookies(self._cookiejar, cookies)
+        wrapped_agent: IAgent = CookieAgent(self._agent, self._cookiejar)
 
         if allow_redirects:
             if browser_like_redirects:
@@ -312,7 +312,7 @@ class HTTPClient:
         if not unbuffered:
             d.addCallback(_BufferedResponse)
 
-        return d.addCallback(_Response, jar)
+        return d.addCallback(_Response, self._cookiejar)
 
     def _request_headers(
         self, headers: Optional[_HeadersType], stacklevel: int
