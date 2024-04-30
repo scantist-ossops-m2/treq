@@ -4,8 +4,17 @@ import uuid
 from collections import abc
 from http.cookiejar import Cookie, CookieJar
 from json import dumps as json_dumps
-from typing import (Any, Callable, Iterable, Iterator, List, Mapping,
-                    Optional, Tuple, Union)
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+)
 from urllib.parse import quote_plus
 from urllib.parse import urlencode as _urlencode
 
@@ -15,16 +24,30 @@ from twisted.internet.defer import Deferred
 from twisted.internet.interfaces import IProtocol
 from twisted.python.components import proxyForInterface, registerAdapter
 from twisted.python.filepath import FilePath
-from twisted.web.client import (BrowserLikeRedirectAgent, ContentDecoderAgent,
-                                CookieAgent, FileBodyProducer, GzipDecoder,
-                                IAgent, RedirectAgent)
+from twisted.web.client import (
+    BrowserLikeRedirectAgent,
+    ContentDecoderAgent,
+    CookieAgent,
+    FileBodyProducer,
+    GzipDecoder,
+    IAgent,
+    RedirectAgent,
+)
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer, IResponse
 
 from treq import multipart
-from treq._types import (_CookiesType, _DataType, _FilesType, _FileValue,
-                         _HeadersType, _ITreqReactor, _JSONType, _ParamsType,
-                         _URLType)
+from treq._types import (
+    _CookiesType,
+    _DataType,
+    _FilesType,
+    _FileValue,
+    _HeadersType,
+    _ITreqReactor,
+    _JSONType,
+    _ParamsType,
+    _URLType,
+)
 from treq.auth import add_auth
 from treq.response import _Response
 
@@ -254,8 +277,8 @@ class HTTPClient:
         if not isinstance(cookies, CookieJar):
             cookies = _scoped_cookiejar_from_dict(parsed_url, cookies)
 
-        cookies = merge_cookies(self._cookiejar, cookies)
-        wrapped_agent: IAgent = CookieAgent(self._agent, cookies)
+        jar: CookieJar = merge_cookies(self._cookiejar, cookies)
+        wrapped_agent: IAgent = CookieAgent(self._agent, jar)
 
         if allow_redirects:
             if browser_like_redirects:
@@ -289,7 +312,7 @@ class HTTPClient:
         if not unbuffered:
             d.addCallback(_BufferedResponse)
 
-        return d.addCallback(_Response, cookies)
+        return d.addCallback(_Response, jar)
 
     def _request_headers(
         self, headers: Optional[_HeadersType], stacklevel: int
