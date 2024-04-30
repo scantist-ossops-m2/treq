@@ -1,10 +1,10 @@
 treq: High-level Twisted HTTP Client API
 ========================================
 
-|pypi|_
-|calver|_
-|coverage|_
-|documentation|_
+|pypi|
+|calver|
+|coverage|
+|documentation|
 
 ``treq`` is an HTTP library inspired by
 `requests <https://requests.readthedocs.io/>`_ but written on top of
@@ -18,15 +18,16 @@ using Twisted.
 
     >>> import treq
 
-    >>> def done(response):
+    >>> async def main(reactor):
+    ...     response = await treq.get("https://github.com")
     ...     print(response.code)
-    ...     reactor.stop()
+    ...     body = await response.text()
+    ...     print("<!DOCTYPE html>" in body)
 
-    >>> treq.get("https://github.com").addCallback(done)
-
-    >>> from twisted.internet import reactor
-    >>> reactor.run()
+    >>> from twisted.internet.task import react
+    >>> react(main)
     200
+    True
 
 For more info `read the docs <https://treq.readthedocs.org>`_.
 
@@ -35,7 +36,7 @@ Contributing
 
 ``treq`` development is hosted on `GitHub <https://github.com/twisted/treq>`_.
 
-We welcome contributions: feel to fork and send contributions over.
+We welcome contributions: feel free to fork and send contributions over.
 See `CONTRIBUTING.rst <https://github.com/twisted/treq/blob/master/CONTRIBUTING.rst>`_ for more info.
 
 Code of Conduct
