@@ -4,19 +4,16 @@ from _utils import print_response
 import treq
 
 
-def main(reactor, *args):
-    d = treq.get('https://httpbin.org/cookies/set?hello=world')
+async def main(reactor):
+    resp = await treq.get("https://httpbin.org/cookies/set?hello=world")
 
-    def _get_jar(resp):
-        jar = resp.cookies()
+    jar = resp.cookies()
+    [cookie] = treq.cookies.raid(jar, domain="httpbin.org", name="hello")
+    print("The server set our hello cookie to: {}".format(cookie.value))
 
-        print('The server set our hello cookie to: {}'.format(jar['hello']))
+    await treq.get("https://httpbin.org/cookies", cookies=jar).addCallback(
+        print_response
+    )
 
-        return treq.get('https://httpbin.org/cookies', cookies=jar)
 
-    d.addCallback(_get_jar)
-    d.addCallback(print_response)
-
-    return d
-
-react(main, [])
+react(main)

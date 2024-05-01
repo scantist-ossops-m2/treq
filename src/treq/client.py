@@ -2,7 +2,7 @@ import io
 import mimetypes
 import uuid
 from collections import abc
-from http.cookiejar import Cookie, CookieJar
+from http.cookiejar import CookieJar
 from json import dumps as json_dumps
 from typing import (
     Any,
@@ -20,6 +20,7 @@ from urllib.parse import urlencode as _urlencode
 
 from hyperlink import DecodedURL, EncodedURL
 from requests.cookies import merge_cookies
+from treq.cookies import scoped_cookie
 from twisted.internet.defer import Deferred
 from twisted.internet.interfaces import IProtocol
 from twisted.python.components import proxyForInterface, registerAdapter
@@ -78,39 +79,7 @@ def _scoped_cookiejar_from_dict(
     if cookie_dict is None:
         return cookie_jar
     for k, v in cookie_dict.items():
-        secure = url_object.scheme == "https"
-        port_specified = not (
-            (url_object.scheme == "https" and url_object.port == 443)
-            or (url_object.scheme == "http" and url_object.port == 80)
-        )
-        port = str(url_object.port) if port_specified else None
-        domain = url_object.host
-        netscape_domain = domain if "." in domain else domain + ".local"
-
-        cookie_jar.set_cookie(
-            Cookie(
-                # Scoping
-                domain=netscape_domain,
-                port=port,
-                secure=secure,
-                port_specified=port_specified,
-                # Contents
-                name=k,
-                value=v,
-                # Constant/always-the-same stuff
-                version=0,
-                path="/",
-                expires=None,
-                discard=False,
-                comment=None,
-                comment_url=None,
-                rfc2109=False,
-                path_specified=False,
-                domain_specified=False,
-                domain_initial_dot=False,
-                rest={},
-            )
-        )
+        cookie_jar.set_cookie(scoped_cookie(url_object, k, v))
     return cookie_jar
 
 
