@@ -12,7 +12,7 @@ from zope.interface import implementer
 
 from treq._agentspy import agent_spy, RequestRecord
 from treq.client import HTTPClient
-from treq.cookies import scoped_cookie, raid
+from treq.cookies import scoped_cookie, search
 
 
 @implementer(IClientRequest)
@@ -95,11 +95,11 @@ class ScopedCookieTests(SynchronousTestCase):
         self.assertEqual(c.domain, "mynas.local")
 
 
-class RaidTests(SynchronousTestCase):
-    """Test `treq.cookies.raid()`"""
+class SearchTests(SynchronousTestCase):
+    """Test `treq.cookies.search()`"""
 
     def test_domain(self) -> None:
-        """`raid()` filters by domain."""
+        """`search()` filters by domain."""
         jar = CookieJar()
         jar.set_cookie(scoped_cookie("http://an.example", "http", "a"))
         jar.set_cookie(scoped_cookie("https://an.example", "https", "b"))
@@ -108,26 +108,26 @@ class RaidTests(SynchronousTestCase):
         jar.set_cookie(scoped_cookie("https://host", "v", "n"))
 
         self.assertEqual(
-            {(c.name, c.value) for c in raid(jar, domain="an.example")},
+            {(c.name, c.value) for c in search(jar, domain="an.example")},
             {("http", "a"), ("https", "b")},
         )
         self.assertEqual(
-            {(c.name, c.value) for c in raid(jar, domain="f.an.example")},
+            {(c.name, c.value) for c in search(jar, domain="f.an.example")},
             {("subdomain", "c"), ("https", "d")},
         )
         self.assertEqual(
-            {(c.name, c.value) for c in raid(jar, domain="host")},
+            {(c.name, c.value) for c in search(jar, domain="host")},
             {("v", "n")},
         )
 
     def test_name(self) -> None:
-        """`raid()` filters by cookie name."""
+        """`search()` filters by cookie name."""
         jar = CookieJar()
         jar.set_cookie(scoped_cookie("https://host", "a", "1"))
         jar.set_cookie(scoped_cookie("https://host", "b", "2"))
 
-        self.assertEqual({c.value for c in raid(jar, domain="host", name="a")}, {"1"})
-        self.assertEqual({c.value for c in raid(jar, domain="host", name="b")}, {"2"})
+        self.assertEqual({c.value for c in search(jar, domain="host", name="a")}, {"1"})
+        self.assertEqual({c.value for c in search(jar, domain="host", name="b")}, {"2"})
 
 
 class HTTPClientCookieTests(SynchronousTestCase):
@@ -252,7 +252,7 @@ class HTTPClientCookieTests(SynchronousTestCase):
         response = self.successResultOf(d)
 
         # The client jar was updated.
-        [a] = raid(self.cookiejar, domain="twisted.example", name="a")
+        [a] = search(self.cookiejar, domain="twisted.example", name="a")
         self.assertEqual(a.value, "2")
         self.assertTrue(a.secure, True)
 

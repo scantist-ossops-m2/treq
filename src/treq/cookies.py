@@ -72,11 +72,11 @@ def scoped_cookie(origin: Union[str, EncodedURL], name: str, value: str) -> Cook
     )
 
 
-def raid(
+def search(
     jar: CookieJar, *, domain: str, name: Optional[str] = None
 ) -> Iterable[Cookie]:
     """
-    Search the cookie jar for matching cookies.
+    Raid the cookie jar for matching cookies.
 
     This is O(n) on the number of cookies in the jar.
 
@@ -88,8 +88,6 @@ def raid(
         for ``foo.bar.tld`` won't return a cookie set for ``bar.tld``).
 
     :param name: Cookie name to match (exactly)
-
-    :param path: URL path to match (exactly)
     """
     netscape_domain = domain if "." in domain else domain + ".local"
 
