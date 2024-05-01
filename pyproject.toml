@@ -14,6 +14,9 @@ directory = "changelog.d"
 title_format = "{version} ({project_date})"
 issue_format = "`#{issue} <https://github.com/twisted/treq/issues/{issue}>`__"
 
+[tool.ruff]
+line-length = 88
+
 [tool.mypy]
 namespace_packages = true
 plugins = "mypy_zope:plugin"

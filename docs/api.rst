@@ -89,6 +89,15 @@ Authentication
 
 .. autoexception:: UnknownAuthConfig
 
+Cookies
+-------
+
+.. module:: treq.cookies
+
+.. autofunction:: scoped_cookie
+
+.. autofunction:: search
+
 Test Helpers
 ------------
 
