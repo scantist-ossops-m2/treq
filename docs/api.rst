@@ -96,6 +96,8 @@ Cookies
 
 .. autofunction:: scoped_cookie
 
+.. autofunction:: search
+
 Test Helpers
 ------------
 
