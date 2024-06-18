@@ -7,12 +7,14 @@ import hashlib
 
 import binascii
 from enum import Enum
-from typing import Union, Optional
+from typing import Union, Optional, TypedDict
 from urllib.parse import urlparse
 
 from twisted.python.randbytes import secureRandom
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IAgent, IBodyProducer, IResponse
+from twisted.internet.defer import Deferred
+
 from zope.interface import implementer
 from requests.utils import parse_dict_header
 
@@ -52,6 +54,22 @@ def _sha512_utf_digest(x: str) -> str:
     return hashlib.sha512(x.encode("utf-8")).hexdigest()
 
 
+class _DigestAuthCacheParams(TypedDict):
+    path: bytes
+    method: bytes
+    cached: bool
+    nonce: str
+    realm: str
+    qop: str | None
+    algorithm: _DIGEST_ALGO
+    opaque: str | None
+
+
+class _DigestAuthCacheEntry(TypedDict):
+    c: int
+    p: _DigestAuthCacheParams
+
+
 class HTTPDigestAuth(object):
     """
     The container for HTTP Digest authentication credentials.
@@ -61,17 +79,15 @@ class HTTPDigestAuth(object):
     """
 
     def __init__(self, username: Union[str, bytes], password: Union[str, bytes]):
-        if isinstance(username, bytes):
-            self._username: str = username.decode("utf-8")
-        else:
-            self._username: str = username
-        if isinstance(password, bytes):
-            self._password: str = password.decode("utf-8")
-        else:
-            self._password: str = password
+        self._username: str = (
+            username.decode("utf-8") if isinstance(username, bytes) else username
+        )
+        self._password: str = (
+            password.decode("utf-8") if isinstance(password, bytes) else password
+        )
 
         # (method,uri) --> digest auth cache
-        self._digest_auth_cache = {}
+        self._digest_auth_cache: dict[tuple[bytes, bytes], _DigestAuthCacheEntry] = {}
 
     def _build_authentication_header(
         self,
@@ -129,7 +145,7 @@ class HTTPDigestAuth(object):
             digest_hash_func = _sha512_utf_digest
         else:
             raise ValueError(
-                f"Unsupported Digest Auth algorithm identifier " f"passed: {algo.name}"
+                f"Unsupported Digest Auth algorithm identifier passed: {algo}"
             )
 
         KD = lambda s, d: digest_hash_func(f"{s}:{d}")  # noqa:E731
@@ -169,7 +185,7 @@ class HTTPDigestAuth(object):
             base += f', qop="auth", nc={ncvalue}, cnonce="{cnonce}"'
 
         if not cached:
-            cache_params = {
+            cache_params: _DigestAuthCacheParams = {
                 "path": url,
                 "method": method,
                 "cached": cached,
@@ -183,7 +199,9 @@ class HTTPDigestAuth(object):
 
         return f"Digest {base}"
 
-    def _cached_metadata_for(self, method: bytes, uri: bytes) -> Optional[dict]:
+    def _cached_metadata_for(
+        self, method: bytes, uri: bytes
+    ) -> Optional[_DigestAuthCacheEntry]:
         return self._digest_auth_cache.get((method, uri))
 
 
@@ -245,7 +263,7 @@ class _RequestDigestAuthenticationAgent:
         uri: bytes,
         headers: Optional[Headers],
         bodyProducer: Optional[IBodyProducer],
-    ):
+    ) -> Deferred[IResponse]:
         """
         Handle the server`s 401 response, that is capable with authentication
             headers, build the Authorization header
@@ -299,7 +317,7 @@ class _RequestDigestAuthenticationAgent:
         uri: bytes,
         headers: Optional[Headers],
         bodyProducer: Optional[IBodyProducer],
-    ):
+    ) -> Deferred[IResponse]:
         """
         Add Authorization header and perform the request with
             actual credentials
@@ -316,7 +334,7 @@ class _RequestDigestAuthenticationAgent:
         """
         if not headers:
             headers = Headers(
-                {b"Authorization": digest_authentication_header.encode("utf-8")}
+                {b"Authorization": [digest_authentication_header.encode("utf-8")]}
             )
         else:
             headers.addRawHeader(
@@ -332,7 +350,7 @@ class _RequestDigestAuthenticationAgent:
         uri: bytes,
         headers: Optional[Headers] = None,
         bodyProducer: Optional[IBodyProducer] = None,
-    ):
+    ) -> Deferred[IResponse]:
         """
         Wrap the agent with HTTP Digest authentication.
 
@@ -409,7 +427,7 @@ def add_digest_auth(agent: IAgent, http_digest_auth: HTTPDigestAuth) -> IAgent:
     return _RequestDigestAuthenticationAgent(agent, http_digest_auth)
 
 
-def add_auth(agent: IAgent, auth_config: Union[tuple, HTTPDigestAuth]):
+def add_auth(agent: IAgent, auth_config: Union[tuple, HTTPDigestAuth]) -> IAgent:
     """
     Wrap an agent to perform authentication
 
