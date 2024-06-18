@@ -181,7 +181,7 @@ class HTTPDigestAuth(object):
         if opaque:
             base += f', opaque="{opaque}"'
         if algorithm:
-            base += f', algorithm="{algorithm}"'
+            base += f', algorithm="{algorithm.value}"'
         if qop:
             base += f', qop="auth", nc={ncvalue}, cnonce="{cnonce}"'
 
