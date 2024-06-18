@@ -286,7 +286,7 @@ class _RequestDigestAuthenticationAgent:
             does not support Digest auth
         """
         www_authenticate_header_string = (
-            www_authenticate_response.headers._rawHeaders.get(
+            www_authenticate_response.headers.getRawHeaders(
                 b"www-authenticate", [b""]
             )[0]
         )
