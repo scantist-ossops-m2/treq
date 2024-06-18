@@ -1,7 +1,7 @@
 # -*- test-case-name: treq.test.test_auth -*-
 # Copyright 2012-2020 The treq Authors.
 # See LICENSE for details.
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division, print_function, annotations
 import re
 import time
 import hashlib
