@@ -78,7 +78,6 @@ Source = "https://github.com/twisted/treq"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["treq"]
 [tool.setuptools.dynamic]
 version = {attr = "treq.__version__"}
 
