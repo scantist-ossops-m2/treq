@@ -1,8 +1,21 @@
 [build-system]
 requires = [
-    "setuptools >= 35.0.2",
-    "wheel >= 0.29.0",
-    "incremental >= 21.3.0",
+  "setuptools >= 35.0.2",
+  "wheel >= 0.29.0",
+
+  # What follows is an exact copy of the runtime dependencies, because (A)
+  # incremental needs to be able to import `treq` to be able to import
+  # `treq.__version__` (see `tools.setuptools.dynamic` below), and (B) the
+  # `treq` module is set up such that everything is eagerly imported into the
+  # top-level namespace and thus sucks in every other dependency that we
+  # require.
+  "incremental >= 21.3.0",
+  "requests >= 2.1.0",
+  "hyperlink >= 21.0.0",
+  "Twisted[tls] >= 22.10.0",  # For #11635
+  "attrs",
+  "typing_extensions >= 3.10.0",
+  "multipart",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -39,7 +52,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-  "incremental",
+  "incremental >= 21.3.0",
   "requests >= 2.1.0",
   "hyperlink >= 21.0.0",
   "Twisted[tls] >= 22.10.0",  # For #11635
@@ -65,6 +78,9 @@ Source = "https://github.com/twisted/treq"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["treq"]
+[tool.setuptools.dynamic]
+version = {attr = "treq.__version__"}
 
 [tool.towncrier]
 package = "treq"
