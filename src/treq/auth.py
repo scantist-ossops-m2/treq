@@ -73,7 +73,7 @@ class _DigestAuthCacheEntry(TypedDict):
 
 class HTTPDigestAuth(object):
     """
-    The container for HTTP Digest authentication credentials.
+    HTTP Digest authentication credentials.
 
     This container will cache digest auth parameters,
     in order not to recompute these for each request.
