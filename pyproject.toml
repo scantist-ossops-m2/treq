@@ -63,6 +63,9 @@ docs = [
 [project.urls]
 Source = "https://github.com/twisted/treq"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.towncrier]
 package = "treq"
 package_dir = "src"
