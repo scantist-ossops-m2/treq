@@ -424,10 +424,6 @@ def add_basic_auth(
     )
 
 
-def add_digest_auth(agent: IAgent, http_digest_auth: HTTPDigestAuth) -> IAgent:
-    return _RequestDigestAuthenticationAgent(agent, http_digest_auth)
-
-
 def add_auth(agent: IAgent, auth_config: Union[tuple, HTTPDigestAuth]) -> IAgent:
     """
     Wrap an agent to perform authentication
@@ -445,6 +441,6 @@ def add_auth(agent: IAgent, auth_config: Union[tuple, HTTPDigestAuth]) -> IAgent
     if isinstance(auth_config, tuple):
         return add_basic_auth(agent, auth_config[0], auth_config[1])
     elif isinstance(auth_config, HTTPDigestAuth):
-        return add_digest_auth(agent, auth_config)
+        return _RequestDigestAuthenticationAgent(agent, auth_config)
 
     raise UnknownAuthConfig(auth_config)
